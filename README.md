@@ -32,7 +32,7 @@ Installs the library to `/usr/local/lib/movout`, creates the executable in `/usr
 bash install.sh
 ```
 
-### Package Managers
+### Package Managers NOT WORKING NEEDS IMPLEMENTATION! 
 Build and install it via your native package manager (after cloning/downloading the repo):
 
 **Debian / Ubuntu / Mint:**
