@@ -3,7 +3,7 @@
   <h1>MovingOut (<code>movout</code>)</h1>
   <p><em>The ultimate Linux distro-hopping and system migration tool for the terminal.</em></p>
   
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+  [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm--Noncommercial--1.0.0-blue.svg)](LICENSE)
   [![GitHub](https://img.shields.io/badge/GitHub-AntonioNappi988-181717.svg?style=flat&logo=github)](https://github.com/AntonioNappi988)
   [![Portfolio](https://img.shields.io/badge/Portfolio-antonionappi.pages.dev-0055FF.svg?style=flat&logo=googlechrome)](https://antonionappi.pages.dev)
 </div>
@@ -95,4 +95,4 @@ Created by **Antonio Nappi**
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE). You are free to use, modify, and integrate it into your own projects (including commercial ones), provided you include the original copyright notice and license in copies or derivatives.
+Released under the [PolyForm Noncommercial License 1.0.0](LICENSE). You are free to use, modify, and share it for any noncommercial purpose (personal use, hobby projects, education, research, nonprofits, etc.), provided you keep the required copyright/license notice. Selling the software, sublicensing it, or using it for any commercial purpose is not permitted.
