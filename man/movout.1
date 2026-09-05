@@ -1,0 +1,98 @@
+.TH MOVOUT 1 "2026-09-05" "MovingOut 1.0.0" "User Commands"
+.SH NAME
+movout \- porting and distro-hopping tool for Linux
+.SH SYNOPSIS
+.B movout
+[\fB\-s\fR|\fB\-\-select\fR] [\fB\-d\fR|\fB\-\-same\-distro\fR] [\fB\-o\fR|\fB\-\-output\fR \fIFILE\fR]
+.br
+.B movout
+\fB\-c\fR|\fB\-\-scan\fR
+.br
+.B movout
+\fB\-h\fR|\fB\-\-help\fR | \fB\-v\fR|\fB\-\-version\fR
+.SH DESCRIPTION
+.B movout
+(MovingOut) scans manually installed packages, enabled systemd services and
+custom scripts (in
+.IR ~/bin ", " ~/.local/bin ", " /usr/local/bin " and " /usr/local/sbin )
+on the current machine, and generates a single self-installing
+.B .sh
+script to reproduce them on a new machine -- either the same Linux distro
+or a different one.
+.PP
+Everything is run from an interactive full\-screen TUI drawn directly in the
+terminal with
+.BR curses (3),
+no graphical toolkit or windowing system is involved.
+.PP
+System\-level packages/services (kernel, base filesystem, systemd itself) are
+hidden entirely, since porting them makes no sense. Items that could break on
+a different distro family -- desktop environments, display managers, GPU
+drivers, bootloaders -- are shown with a
+.B (!)
+warning and reason, and are unselected by default when the target distro
+family differs from the current one.
+.SH OPTIONS
+.TP
+\fB\-s\fR, \fB\-\-select\fR
+Open the interactive TUI to pick what to port and generate the script. This
+is the default action when no option is given.
+.TP
+\fB\-c\fR, \fB\-\-scan\fR
+Print a summary (package/service/script counts) without opening the TUI and
+without generating anything.
+.TP
+\fB\-d\fR, \fB\-\-same\-distro\fR
+Skip the target\-distro picker screen and reuse the currently detected
+distro as the target.
+.TP
+\fB\-o\fR, \fB\-\-output\fR \fIFILE\fR
+Path of the generated \fB.sh\fR file. Defaults to
+\fBmovingout\-install\-<distro>.sh\fR in the current directory.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show usage and exit.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Show the version and exit.
+.SH TUI KEY BINDINGS
+.TP
+Up/Down arrows
+Navigate the list
+.TP
+Enter
+Toggle the selection of the current item
+.TP
+A
+Toggle every item in the current category
+.TP
+Ctrl+S
+Save: play the packing animation and write the \fB.sh\fR script
+.TP
+Ctrl+C
+Quit without generating anything
+.SH SUPPORTED TARGET DISTROS
+Debian / Ubuntu / Mint (apt), Fedora (dnf), RHEL / CentOS / Rocky / Alma
+(dnf), Arch / Manjaro (pacman), openSUSE (zypper), Alpine (apk).
+.SH EXAMPLES
+.TP
+movout
+Open the TUI (same as \fBmovout -s\fR).
+.TP
+movout -c
+Print the scan summary only.
+.TP
+movout -s -d -o porting.sh
+Open the TUI, keep the current distro as target, write the result to
+\fBporting.sh\fR.
+.SH FILES
+.TP
+movingout\-failed.log
+Written in the directory where the generated script is run; lists every
+package/service that could not be installed or enabled. A single failure
+never stops the rest of the script.
+.SH AUTHOR
+Written by Antonio Nappi <https://github.com/AntonioNappi988>
+(https://antonionappi.pages.dev).
+.SH LICENSE
+MIT. See the LICENSE file shipped with the source.
