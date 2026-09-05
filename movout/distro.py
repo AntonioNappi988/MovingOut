@@ -1,5 +1,4 @@
 """Distro & package-manager detection."""
-import os
 import shutil
 
 # family -> package manager binary used for install commands

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Read-only token: this pipeline only checks code, it never pushes,
+# publishes, or modifies anything in the repo.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install lint tools
+        run: python -m pip install --upgrade pip ruff
+
+      - name: Syntax check
+        run: python -m compileall -q movout
+
+      - name: "Lint (real errors only: unused imports, undefined names, syntax)"
+        run: python -m ruff check movout --select E9,F
+
+      - name: CLI smoke test
+        run: python -m movout --help
+
+      - name: Shellcheck install scripts
+        run: shellcheck install.sh packaging/build-deb.sh
+        continue-on-error: true

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+.ruff_cache/
+
+# Generated installer scripts (tool output, not source)
+movingout-install-*.sh
