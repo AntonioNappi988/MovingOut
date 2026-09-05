@@ -4,6 +4,8 @@
   <p><em>The ultimate Linux distro-hopping and system migration tool for the terminal.</em></p>
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+  [![GitHub](https://img.shields.io/badge/GitHub-AntonioNappi988-181717.svg?style=flat&logo=github)](https://github.com/AntonioNappi988)
+  [![Portfolio](https://img.shields.io/badge/Portfolio-antonionappi.pages.dev-0055FF.svg?style=flat&logo=googlechrome)](https://antonionappi.pages.dev)
 </div>
 
 ## 🚀 Overview
