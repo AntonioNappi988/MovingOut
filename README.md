@@ -1,89 +1,96 @@
-![MovingOut logo](movingoutlogo.png)
+<div align="center">
+  <img src="movingoutlogo.png" alt="MovingOut logo" width="200"/>
+  <h1>MovingOut (<code>movout</code>)</h1>
+  <p><em>The ultimate Linux distro-hopping and system migration tool for the terminal.</em></p>
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+</div>
 
-# MovingOut (`movout`)
+## 🚀 Overview
 
-A pure shell/terminal tool for **Linux distro-hopping / porting**: it scans
-the current machine (manually installed packages, enabled systemd services,
-custom scripts in `~/bin`, `~/.local/bin`, `/usr/local/bin`,
-`/usr/local/sbin`) and generates a single self-installing `.sh` script to run
-on the new machine.
+**MovingOut** is a pure shell/terminal tool designed to make Linux distro-hopping and system porting painless. It scans your current machine for manually installed packages, enabled systemd services, and custom user scripts, then generates a single, self-contained `.sh` script to replicate your setup on a new machine.
 
-Everything runs inside the terminal via `curses` — there is no graphical
-window, desktop app, or X11/Wayland dependency. It works over plain SSH.
+Everything runs entirely in the terminal via a `curses`-based TUI (Text User Interface). No graphical desktop, X11, or Wayland dependencies required—it works perfectly over plain SSH!
 
-## Install
+---
 
-Quick install from source:
+## ✨ Features
+- 📦 **Cross-Distro Translation:** Automatically translates package names between distros (e.g., `apt` to `dnf` to `pacman`) using a best-effort mapping system.
+- ⚙️ **Systemd Services & Scripts:** Detects enabled services and embeds custom scripts (`~/bin`, `/usr/local/bin`, `/usr/local/sbin`, etc.) as base64 payloads to restore them perfectly.
+- 🛡️ **Smart Filtering:** Hides base-system packages (which don't need porting) and flags risky items (like Desktop Environments, kernels, or GPU drivers) when migrating between different distro families.
+- 🖥️ **TUI Driven:** Fast, keyboard-navigable interactive interface.
+- 🚀 **Fault-Tolerant Output:** The generated script never stops on a single failure; errors are safely logged to `movingout-failed.log` while the rest of the installation continues.
+
+## 📥 Installation
+
+### Quick Install (From Source)
+Installs the library to `/usr/local/lib/movout`, creates the executable in `/usr/local/bin`, and installs the `movout(1)` man page.
 ```bash
+# Clone the repository first, then run:
 bash install.sh
 ```
-Installs the library to `/usr/local/lib/movout`, creates the `movout`
-command in `/usr/local/bin`, and installs the `movout(1)` man page.
 
-Package-manager install (build it yourself once you clone/download the repo):
+### Package Managers
+Build and install it via your native package manager (after cloning/downloading the repo):
+
+**Debian / Ubuntu / Mint:**
 ```bash
-# Debian / Ubuntu / Mint
 bash packaging/build-deb.sh
 sudo apt install ./movout_1.0.0_all.deb
+```
 
-# Arch / Manjaro (AUR-style package)
+**Arch Linux / Manjaro (AUR-style):**
+```bash
 cd packaging
 makepkg -si
 ```
-See `packaging/PKGBUILD` if you want to publish it to the AUR yourself
-(after tagging a GitHub release, run `updpkgsums` in `packaging/` to fill in
-the real checksum instead of `SKIP`).
+*(Note: For AUR maintainers, check `packaging/PKGBUILD`. Run `updpkgsums` in `packaging/` after tagging a GitHub release to update checksums).*
 
-## Usage
+## 💻 Usage
+
+Simply type `movout` to launch the interactive TUI. 
+
+### Command Line Options
 ```bash
-movout            # open the interactive TUI (default action, same as -s)
-movout -s         # open the interactive TUI explicitly
-movout -c         # print a scan summary, generate nothing
-movout -s -d      # skip target-distro picker, keep the current distro
-movout -s -o /tmp/porting.sh   # custom output path
-movout -h         # full option list
-movout -v         # print version
-man movout        # full manual + TUI keybindings
+movout                 # Open the interactive TUI (default action)
+movout -s              # Open the interactive TUI explicitly
+movout -c              # Dry-run: print a scan summary without generating a script
+movout -s -d           # Skip the target-distro picker (assumes current distro)
+movout -s -o /path/sh  # Generate the script at a custom output path
+movout -h              # Show full help and option list
+movout -v              # Print version
+man movout             # View the full manual and TUI keybindings
 ```
 
-## Flow
-1. **Target distro selection** (Debian/Ubuntu, Fedora, RHEL, Arch, openSUSE,
-   Alpine) — if it's the same as the current one, everything defaults to
-   selected, no extra care needed.
-2. **Item selection**: packages, services, custom scripts. Everything is
-   selected by default, **except**:
-   - base-system packages/services (hidden entirely, porting them makes no
-     sense)
-   - desktop environments, display managers, kernel/GPU drivers, bootloader:
-     shown with a **(!) reason**, unselected by default when the target
-     distro is a different family (they might not work there).
-3. **Ctrl+S**: plays the box-packing animation, then writes the `.sh` file.
+## 🔄 The Migration Flow
 
-## TUI key bindings
+1. **Target Distro Selection:** Choose your destination (Debian/Ubuntu, Fedora, RHEL, Arch, openSUSE, Alpine). If moving to the same distro, everything defaults to selected automatically.
+2. **Item Selection:** Review packages, services, and scripts.
+   - *Base packages* are hidden entirely as porting them makes no sense.
+   - *System-critical items* (DEs, display managers, kernels, bootloaders) are shown with a **(!)** reason and are unselected by default when crossing distro families.
+3. **Pack & Export:** Hit `Ctrl+S` to watch the box-packing animation and generate your migration script!
+
+## ⌨️ TUI Key Bindings
+
 | Key | Action |
 |---|---|
-| Up/Down arrows | navigate |
-| Enter | toggle selection |
-| A | toggle the whole current category |
-| Ctrl+S | save and generate the script |
-| Ctrl+C | quit without generating |
+| `↑` / `↓` | Navigate list items |
+| `Enter` | Toggle selection for the highlighted item |
+| `A` | Toggle selection for the entire current category |
+| `Ctrl+S` | Save selections and generate the script |
+| `Ctrl+C` | Quit immediately without saving |
 
-## About the generated script
-- Uses the correct package manager for the chosen distro (`apt`, `dnf`,
-  `pacman`, `zypper`, `apk`) and translates package names when needed
-  (`mapping.py`, best-effort).
-- A single package/service failure never stops the script: failures are
-  logged to `movingout-failed.log`.
-- Custom scripts are embedded (base64) and restored to their original path.
+## 🛠️ Extending & Customizing
 
-## Extending
-- `movout/mapping.py`: add more package-name translations across distros.
-- `movout/rules.py`: add patterns to hide/flag more packages.
+Want to improve the cross-distro intelligence? Contributions are welcome!
+- **`movout/mapping.py`**: Add or refine package-name translations across different distributions.
+- **`movout/rules.py`**: Add regex patterns or rules to hide or flag specific packages during the scan.
 
-## Author
-Created by **Antonio Nappi** — [GitHub](https://github.com/AntonioNappi988) — [portfolio](https://antonionappi.pages.dev)
+## 👨‍💻 Author
 
-## License
-Released under the [MIT license](LICENSE): use it, modify it, and integrate
-it freely, including in commercial projects, as long as you keep the
-copyright notice and license in copies/derivatives.
+Created by **Antonio Nappi**  
+[GitHub](https://github.com/AntonioNappi988) | [Portfolio](https://antonionappi.pages.dev)
+
+## 📄 License
+
+Released under the [MIT License](LICENSE). You are free to use, modify, and integrate it into your own projects (including commercial ones), provided you include the original copyright notice and license in copies or derivatives.
