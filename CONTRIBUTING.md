@@ -1,5 +1,7 @@
 # Contributing to MovingOut
 
+<!-- test PR to surface the CI status check in GitHub's ruleset picker -->
+
 Thanks for wanting to contribute! This project is licensed under the
 [PolyForm Noncommercial License 1.0.0](LICENSE): contributions are welcome
 for any noncommercial purpose (personal use, hobby, learning, research,
