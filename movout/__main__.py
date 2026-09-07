@@ -1,9 +1,10 @@
 import argparse
 import curses
 import os
+import subprocess
 import sys
 
-from . import __version__, distro, packages, services, customscripts, rules
+from . import __version__, distro, packages, services, customscripts, rules, portscan
 from .tui import Item, pick_target_distro, run_selector, run_packing_animation
 from .generator import build_script, write_script
 
@@ -54,23 +55,29 @@ def cmd_scan(args):
     print(f"Custom scripts found: {len(script_paths)}")
 
 
-def _curses_main(stdscr, args, info, pkg_names, svc_names, script_paths):
+def _curses_main(stdscr, args, info):
     curses.curs_set(0)
     # Raw mode: without it, Ctrl+C raises SIGINT/KeyboardInterrupt instead of
     # reaching getch(), and Ctrl+S is swallowed by terminal flow control
     # (XOFF), freezing the screen instead of triggering save.
     curses.raw()
     if args.same_distro:
-        target_family = info["family"]
+        mode, value = "create", info["family"]
     else:
-        target_family = pick_target_distro(stdscr, info["family"])
-        if target_family is None:
-            return None, None
+        found_scripts = portscan.find_generated_scripts()
+        mode, value = pick_target_distro(stdscr, info["family"], found_scripts)
+        if mode is None:
+            return None, None, None
 
+    if mode == "install":
+        return None, None, value
+
+    target_family = value
+    pkg_names, svc_names, script_paths = _scan(info)
     categories = _build_categories(info, target_family, pkg_names, svc_names, script_paths)
     result = run_selector(stdscr, categories, target_family)
     if result != "save":
-        return None, None
+        return None, None, None
 
     selected_pkgs = [it.name for it in categories["Packages"] if it.selected]
     selected_svcs = [it.name for it in categories["Services (systemd)"] if it.selected]
@@ -80,17 +87,30 @@ def _curses_main(stdscr, args, info, pkg_names, svc_names, script_paths):
     run_packing_animation(stdscr, all_selected_names)
 
     content = build_script(info, target_family, selected_pkgs, selected_svcs, selected_scripts)
-    return content, target_family
+    return content, target_family, None
+
+
+def _run_install_script(path):
+    print(f"MovingOut: running install script: {path}")
+    try:
+        subprocess.run(["bash", path], check=False)
+    except FileNotFoundError:
+        print("Error: 'bash' not found on this system.")
 
 
 def cmd_run(args):
     info = distro.detect_current()
-    print("MovingOut: scanning the system...")
-    pkg_names, svc_names, script_paths = _scan(info)
 
-    content, target_family = curses.wrapper(
-        _curses_main, args, info, pkg_names, svc_names, script_paths
-    )
+    content, target_family, install_path = curses.wrapper(_curses_main, args, info)
+
+    if install_path:
+        answer = input(f"Run '{install_path}' on this machine now? [y/N] ").strip().lower()
+        if answer == "y":
+            _run_install_script(install_path)
+        else:
+            print("Cancelled, script not executed.")
+        return
+
     if content is None:
         print("Cancelled, no file was generated.")
         return

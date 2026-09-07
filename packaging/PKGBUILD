@@ -1,6 +1,6 @@
 # Maintainer: Antonio Nappi <https://github.com/AntonioNappi988>
 pkgname=movout
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="Linux distro-hopping / porting tool: scan packages, services and scripts, generate a self-installing .sh for a new machine"
 arch=('any')

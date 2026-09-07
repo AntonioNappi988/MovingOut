@@ -38,7 +38,7 @@ Build and install it via your native package manager (after cloning/downloading 
 **Debian / Ubuntu / Mint:**
 ```bash
 bash packaging/build-deb.sh
-sudo apt install ./movout_1.0.0_all.deb
+sudo apt install ./movout_1.0.1_all.deb
 ```
 
 **Arch Linux / Manjaro (AUR-style):**
@@ -67,9 +67,11 @@ man movout             # View the full manual and TUI keybindings
 ## 🔄 The Migration Flow
 
 1. **Target Distro Selection:** Choose your destination (Debian/Ubuntu, Fedora, RHEL, Arch, openSUSE, Alpine). If moving to the same distro, everything defaults to selected automatically.
+   - On this same screen, `movout` also auto-scans common locations (current directory, `~`, `~/Downloads`, `~/Desktop`, `/tmp`) for `.sh` scripts it previously generated. If any are found, they're listed right below the distro choices — pick one to run it on this machine instead of creating a new script (a final `y/N` confirmation is asked before it actually runs).
 2. **Item Selection:** Review packages, services, and scripts.
    - *Base packages* are hidden entirely as porting them makes no sense.
    - *System-critical items* (DEs, display managers, kernels, bootloaders) are shown with a **(!)** reason and are unselected by default when crossing distro families.
+   - Press `Ctrl+F` to search by name and jump straight to a package/service/script instead of scrolling the whole list.
 3. **Pack & Export:** Hit `Ctrl+S` to watch the box-packing animation and generate your migration script!
 
 ## ⌨️ TUI Key Bindings
@@ -79,6 +81,7 @@ man movout             # View the full manual and TUI keybindings
 | `↑` / `↓` | Navigate list items |
 | `Enter` | Toggle selection for the highlighted item |
 | `A` | Toggle selection for the entire current category |
+| `Ctrl+F` | Search by name and jump to the next match |
 | `Ctrl+S` | Save selections and generate the script |
 | `Ctrl+C` | Quit immediately without saving |
 
