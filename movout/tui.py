@@ -19,10 +19,19 @@ def _draw_app_header(stdscr, w):
     stdscr.addstr(0, col, banner[: w - 1], curses.A_BOLD)
 
 
+def _addstr_centered(stdscr, row, w, text, attr=curses.A_NORMAL):
+    col = max(0, (w - len(text)) // 2)
+    try:
+        stdscr.addstr(row, col, text[: w - 1], attr)
+    except curses.error:
+        pass
+
+
 def run_scanning_animation(stdscr, work_fn, message="Scanning system (packages, services, scripts)..."):
     """Runs work_fn() in a background thread while drawing an indeterminate
     progress bar, so the command is clearly acknowledged even when the scan
-    is slow (large package lists). Returns work_fn()'s return value."""
+    is slow (large package lists). Everything is centered in the middle of
+    the screen. Returns work_fn()'s return value."""
     result = {}
 
     def _target():
@@ -32,8 +41,7 @@ def run_scanning_animation(stdscr, work_fn, message="Scanning system (packages, 
     t.start()
 
     h, w = stdscr.getmaxyx()
-    top = h // 2
-    left = max(1, (w - max(len(message), 26)) // 2)
+    mid = h // 2
     bar_w = 24
     frame = 0
 
@@ -41,17 +49,15 @@ def run_scanning_animation(stdscr, work_fn, message="Scanning system (packages, 
     while t.is_alive():
         stdscr.erase()
         _draw_app_header(stdscr, w)
-        try:
-            stdscr.addstr(top - 1, left, message[: w - 1], curses.A_BOLD)
-        except curses.error:
-            pass
+        _addstr_centered(stdscr, mid - 1, w, message, curses.A_BOLD)
+
         pos = frame % (bar_w * 2)
         pos = pos if pos < bar_w else (bar_w * 2 - pos) - 1
         bar = "[" + (" " * pos) + "=" + (" " * (bar_w - pos - 1)) + "]"
-        try:
-            stdscr.addstr(top + 1, left, bar)
-        except curses.error:
-            pass
+        _addstr_centered(stdscr, mid + 1, w, bar)
+
+        _addstr_centered(stdscr, mid + 3, w, "Please wait...", curses.A_DIM)
+
         stdscr.refresh()
         curses.napms(80)
         frame += 1
