@@ -25,14 +25,20 @@ Everything runs entirely in the terminal via a `curses`-based TUI (Text User Int
 
 ## 📥 Installation
 
-### Quick Install (From Source)
-Installs the library to `/usr/local/lib/movout`, creates the executable in `/usr/local/bin`, and installs the `movout(1)` man page.
+### One-liner (recommended)
+No need to clone anything first — this fetches the source and installs it in one shot. Installs the library to `/usr/local/lib/movout`, creates the executable in `/usr/local/bin`, and installs the `movout(1)` man page.
 ```bash
-# Clone the repository first, then run:
+curl -fsSL https://raw.githubusercontent.com/AntonioNappi988/MovingOut/main/install.sh | bash
+```
+
+### From a local clone
+```bash
+git clone https://github.com/AntonioNappi988/MovingOut.git
+cd MovingOut
 bash install.sh
 ```
 
-### Package Managers NOT WORKING NEEDS IMPLEMENTATION! 
+### Package Managers
 Build and install it via your native package manager (after cloning/downloading the repo):
 
 **Debian / Ubuntu / Mint:**

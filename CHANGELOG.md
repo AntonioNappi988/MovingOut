@@ -43,6 +43,16 @@ All notable changes to `movout` are documented in this file.
 
 ### Changed
 - Bumped version from `1.0.0` to `1.0.1`.
+- **One-liner install**: `install.sh` now works when piped directly (`curl -fsSL
+  .../install.sh | bash`), auto-fetching the source itself (via `git clone`, or
+  a `curl | tar` fallback) when it isn't run from a local clone. No more
+  clone-then-run-script dance.
+
+### Fixed
+- **AUR package (`packaging/PKGBUILD`) was broken**: `makepkg` failed every
+  time because the script `cd`'d into `movingout-$pkgver` (lowercase), but the
+  GitHub tarball actually extracts to `MovingOut-$pkgver` (the repo's real
+  casing). Fixed and verified with a clean `makepkg` build.
 
 ## [1.0.0]
 

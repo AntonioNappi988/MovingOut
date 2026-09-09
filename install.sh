@@ -71,7 +71,30 @@ if ! python3 -c "import curses" >/dev/null 2>&1; then
   echo ">>> python3 'curses' module was missing -- MovingOut installed it automatically."
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_URL="https://github.com/AntonioNappi988/MovingOut"
+SCRIPT_SOURCE="${BASH_SOURCE[0]:-}"
+SCRIPT_DIR=""
+if [ -n "$SCRIPT_SOURCE" ] && [ -f "$SCRIPT_SOURCE" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+fi
+
+# Not run from a local clone (e.g. piped in via `curl | bash`) -- fetch the
+# source ourselves so this script works as a true one-liner installer.
+if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR/movout" ]; then
+  echo "Fetching MovingOut source ..."
+  TMP_DIR="$(mktemp -d)"
+  trap 'rm -rf "$TMP_DIR"' EXIT
+  if command -v git >/dev/null 2>&1; then
+    git clone --depth 1 "$REPO_URL.git" "$TMP_DIR/src" -q
+  elif command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$REPO_URL/archive/refs/heads/main.tar.gz" | tar -xz -C "$TMP_DIR"
+    mv "$TMP_DIR"/MovingOut-*/ "$TMP_DIR/src"
+  else
+    echo "Error: need either git or curl to fetch the MovingOut source." >&2
+    exit 1
+  fi
+  SCRIPT_DIR="$TMP_DIR/src"
+fi
 
 echo "Installing MovingOut to $PREFIX ..."
 sudo mkdir -p "$PREFIX" "$MAN_DIR"
