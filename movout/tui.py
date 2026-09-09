@@ -2,12 +2,20 @@
 import curses
 import os
 
+from . import __version__, APP_NAME
 from .distro import SUPPORTED_TARGETS
 from .animation import play_packing_animation, play_install_animation
 
 CTRL_S = 19  # Ctrl+S
 CTRL_C = 3   # Ctrl+C (curses usually delivers this as KeyboardInterrupt, handled too)
 CTRL_F = 6   # Ctrl+F (search)
+
+
+def _draw_app_header(stdscr, w):
+    """Top banner shown on every screen: app name + version, centered."""
+    banner = f"{APP_NAME} v{__version__}"
+    col = max(0, (w - len(banner)) // 2)
+    stdscr.addstr(0, col, banner[: w - 1], curses.A_BOLD)
 
 
 class Item:
@@ -40,10 +48,11 @@ def pick_target_distro(stdscr, current_family, found_scripts=None):
     while True:
         stdscr.erase()
         h, w = stdscr.getmaxyx()
-        stdscr.addstr(0, 2, "MovingOut - select the target distro", curses.A_BOLD)
-        stdscr.addstr(1, 2, f"Detected current distro: {current_family}")
+        _draw_app_header(stdscr, w)
+        stdscr.addstr(1, 2, "MovingOut - select the target distro", curses.A_BOLD)
+        stdscr.addstr(2, 2, f"Detected current distro: {current_family}")
 
-        row = 3
+        row = 4
         for i, (fam, label) in enumerate(distro_entries):
             marker = "->" if i == idx else "  "
             same = "  (same family)" if fam == current_family else ""
@@ -112,16 +121,17 @@ def run_selector(stdscr, categories, target_family):
     while True:
         h, w = stdscr.getmaxyx()
         stdscr.erase()
-        stdscr.addstr(0, 2, f"MovingOut - target: {target_family}", curses.A_BOLD)
-        stdscr.addstr(1, 2, "Enter: toggle selection   A: toggle whole category")
+        _draw_app_header(stdscr, w)
+        stdscr.addstr(1, 2, f"MovingOut - target: {target_family}", curses.A_BOLD)
+        stdscr.addstr(2, 2, "Enter: toggle selection   A: toggle whole category")
 
-        body_h = h - 5
+        body_h = h - 6
         if cursor < top:
             top = cursor
         if cursor >= top + body_h:
             top = cursor - body_h + 1
 
-        row = 3
+        row = 4
         for i in range(top, min(len(flat), top + body_h)):
             kind, payload = flat[i]
             if kind == "header":
@@ -248,6 +258,7 @@ def confirm_install(stdscr, path):
     curses.curs_set(0)
     h, w = stdscr.getmaxyx()
     stdscr.erase()
+    _draw_app_header(stdscr, w)
     stdscr.addstr(2, 2, "MovingOut - confirm installation", curses.A_BOLD)
     stdscr.addstr(4, 2, f"Run '{os.path.basename(path)}' on this machine now?"[: w - 3])
     stdscr.addstr(5, 2, path[: w - 3])
