@@ -60,25 +60,31 @@ def pick_target_distro(stdscr, current_family, found_scripts=None):
             stdscr.addstr(row, 2, f"{marker} {label}{same}"[: w - 3], attr)
             row += 1
 
-        if install_entries:
-            row += 1
-            wall = "-" * max(10, w - 4)
-            stdscr.addstr(row, 2, wall[: w - 3])
-            row += 1
+        row += 1
+        wall = "-" * max(10, w - 4)
+        stdscr.addstr(row, 2, wall[: w - 3])
+        row += 1
+        stdscr.addstr(
+            row, 2,
+            f"Install an existing migration script for '{current_family}':",
+            curses.A_BOLD | curses.A_UNDERLINE,
+        )
+        row += 1
+        if not install_entries:
             stdscr.addstr(
                 row, 2,
-                f"Install an existing migration script for '{current_family}':",
-                curses.A_BOLD | curses.A_UNDERLINE,
+                "  No .sh installation script found for this distro."[: w - 3],
+                curses.A_DIM,
             )
             row += 1
-            for j, path in enumerate(install_entries):
-                i = len(distro_entries) + j
-                marker = "->" if i == idx else "  "
-                attr = curses.A_REVERSE if i == idx else curses.A_NORMAL
-                line = (f"{marker} Found '{os.path.basename(path)}' in "
-                        f"{os.path.dirname(path) or '.'} - run it on this machine?")
-                stdscr.addstr(row, 2, line[: w - 3], attr)
-                row += 1
+        for j, path in enumerate(install_entries):
+            i = len(distro_entries) + j
+            marker = "->" if i == idx else "  "
+            attr = curses.A_REVERSE if i == idx else curses.A_NORMAL
+            line = (f"{marker} Found '{os.path.basename(path)}' in "
+                    f"{os.path.dirname(path) or '.'} - run it on this machine?")
+            stdscr.addstr(row, 2, line[: w - 3], attr)
+            row += 1
 
         stdscr.addstr(h - 2, 2, "Arrows: move  Enter: confirm  Ctrl+C: quit")
         stdscr.refresh()
