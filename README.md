@@ -18,10 +18,11 @@ Everything runs entirely in the terminal via a `curses`-based TUI (Text User Int
 
 ## ✨ Features
 - 📦 **Cross-Distro Translation:** Automatically translates package names between distros (e.g., `apt` to `dnf` to `pacman`) using a best-effort mapping system.
+- ✅ **Online Name Validation:** Before generating the script, translated names are checked against [Repology](https://repology.org) (with a live fallback to the official Arch/Fedora APIs) to catch wrong or nonexistent package names ahead of time instead of finding out on the new machine.
 - ⚙️ **Systemd Services & Scripts:** Detects enabled services and embeds custom scripts (`~/bin`, `/usr/local/bin`, `/usr/local/sbin`, etc.) as base64 payloads to restore them perfectly.
 - 🛡️ **Smart Filtering:** Hides base-system packages (which don't need porting) and flags risky items (like Desktop Environments, kernels, or GPU drivers) when migrating between different distro families.
 - 🖥️ **TUI Driven:** Fast, keyboard-navigable interactive interface.
-- 🚀 **Fault-Tolerant Output:** The generated script never stops on a single failure; errors are safely logged to `movingout-failed.log` while the rest of the installation continues.
+- 🚀 **Fault-Tolerant Output:** The generated script never stops on a single failure; errors — including any package flagged as not found during validation — are logged to `movingout-failed.log` and printed by name when the script finishes, while the rest of the installation continues.
 
 ## 📥 Installation
 
@@ -95,6 +96,7 @@ man movout             # View the full manual and TUI keybindings
 
 Want to improve the cross-distro intelligence? Contributions are welcome!
 - **`movout/mapping.py`**: Add or refine package-name translations across different distributions.
+- **`movout/pkgvalidate.py`**: Online validation (via Repology, with Arch/Fedora live-API fallback) that a translated name actually exists for the target distro before the script is generated. Add another distro's official package-search API here to extend live-fallback coverage beyond Arch/Fedora/RHEL.
 - **`movout/rules.py`**: Add regex patterns or rules to hide or flag specific packages during the scan.
 
 ## 👨‍💻 Author

@@ -50,11 +50,14 @@ def _embed_script_block(path):
     )
 
 
-def build_script(source_info, target_family, packages, services, custom_scripts):
+def build_script(source_info, target_family, packages, services, custom_scripts, validation=None):
     """packages/services: list of selected canonical names.
     custom_scripts: list of absolute paths to embed.
+    validation: optional dict translated_name -> "verified"/"missing"/"unknown"
+    (see pkgvalidate.py), used to flag likely-wrong names upfront.
     Returns the full shell script content as a string.
     """
+    validation = validation or {}
     pm = pm_for_family(target_family)
     lines = []
     lines.append("#!/usr/bin/env bash")
@@ -72,8 +75,17 @@ def build_script(source_info, target_family, packages, services, custom_scripts)
     lines.append('echo "== MovingOut: installing packages =="')
     for pkg in packages:
         target_name = mapping.translate(pkg, target_family)
+        status = validation.get(target_name)
+        if status == "missing":
+            lines.append(
+                f'# NOTE: "{target_name}" was not found for this distro during the '
+                f"pre-check on the source machine -- the name is likely wrong."
+            )
+            fail_entry = f"{pkg} -> {target_name} (name not found for this distro, check it manually)"
+        else:
+            fail_entry = f"{pkg} -> {target_name}"
         lines.append(
-            f'install_pkg "{target_name}" || echo "{pkg} -> {target_name}" >> "$FAILED_LOG"'
+            f'install_pkg "{target_name}" || echo "{fail_entry}" >> "$FAILED_LOG"'
         )
     lines.append("")
 
@@ -94,7 +106,12 @@ def build_script(source_info, target_family, packages, services, custom_scripts)
 
     lines.append('echo "== MovingOut: done =="')
     lines.append('if [ -s "$FAILED_LOG" ]; then')
-    lines.append('  echo "Some items failed, see $FAILED_LOG"')
+    lines.append('  echo ""')
+    lines.append('  echo "WARNING: the following items could not be installed/enabled automatically:"')
+    lines.append('  while IFS= read -r _movout_line; do echo "  - $_movout_line"; done < "$FAILED_LOG"')
+    lines.append('  echo ""')
+    lines.append('  echo "Check the exact package/service name for this distro and install manually if needed."')
+    lines.append('  echo "Full details saved in: $FAILED_LOG"')
     lines.append("fi")
     lines.append("")
     return "\n".join(lines)

@@ -41,6 +41,31 @@ All notable changes to `movout` are documented in this file.
   "Press 1 to exit, 0 to restart MovingOut", letting you generate another
   script (e.g. for a different target distro) without relaunching the command.
 
+### Added
+- **Online package-name validation**: when porting to a different distro
+  family, `movout` now checks each translated package name against
+  [Repology](https://repology.org) before generating the script (with a
+  live fallback to the official Arch and Fedora/RHEL package-search APIs
+  when Repology has no data), instead of trusting the static translation
+  table blindly.
+  - Runs in the background with the same progress-bar animation used for
+    scanning, so it never looks frozen; results are cached on disk for 30
+    days to avoid re-querying the same package repeatedly.
+  - Names confirmed **not to exist** for the target distro are flagged with
+    a comment right above the install line in the generated script, and
+    their failure-log entry explicitly says the name is likely wrong.
+  - Every network failure (offline, rate-limited, unsupported family)
+    degrades to "unverified" and never blocks script generation; after a
+    couple of consecutive connection failures it stops hitting the network
+    for the rest of the batch instead of hanging.
+  - Skipped entirely for same-distro reinstalls, where the package is
+    already known-good on this exact machine.
+- **Explicit end-of-script failure summary**: the generated script used to
+  just point at `movingout-failed.log`; it now also prints every failed
+  package/service by name directly to the terminal when it finishes
+  running, so the person on the new machine sees immediately what needs
+  manual attention instead of having to go open a log file.
+
 ### Changed
 - Bumped version from `1.0.0` to `1.0.1`.
 - **One-liner install**: `install.sh` now works when piped directly (`curl -fsSL
@@ -53,6 +78,12 @@ All notable changes to `movout` are documented in this file.
   time because the script `cd`'d into `movingout-$pkgver` (lowercase), but the
   GitHub tarball actually extracts to `MovingOut-$pkgver` (the repo's real
   casing). Fixed and verified with a clean `makepkg` build.
+- **Alpine mapping never applied**: `mapping.py` keyed its Alpine
+  translations under `"apk"`, but every caller (`distro.py`, the target-distro
+  picker, the generator) uses the family name `"alpine"` — so `translate()`
+  always fell through to the unchanged Debian name on Alpine, silently
+  defeating the mapping table for that whole family. Fixed by renaming the
+  keys to `"alpine"`.
 
 ## [1.0.0]
 
