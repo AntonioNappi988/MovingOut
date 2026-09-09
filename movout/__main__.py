@@ -107,23 +107,35 @@ def _run_install_script(path):
         print("Error: 'bash' not found on this system.")
 
 
+def _ask_exit_or_restart():
+    while True:
+        choice = input("Press 1 to exit, 0 to restart MovingOut: ").strip()
+        if choice in ("1", "0"):
+            return choice
+
+
 def cmd_run(args):
     info = distro.detect_current()
 
-    content, target_family, install_path = curses.wrapper(_curses_main, args, info)
+    while True:
+        content, target_family, install_path = curses.wrapper(_curses_main, args, info)
 
-    if install_path:
-        _run_install_script(install_path)
+        if install_path:
+            _run_install_script(install_path)
+            return
+
+        if content is None:
+            print("Cancelled, no file was generated.")
+            return
+
+        out_path = args.output or f"movingout-install-{target_family}.sh"
+        write_script(content, out_path)
+        print(f"Done. Script generated: {out_path}")
+        print(f"Copy it to the new machine and run: bash {out_path}")
+
+        if _ask_exit_or_restart() == "0":
+            continue
         return
-
-    if content is None:
-        print("Cancelled, no file was generated.")
-        return
-
-    out_path = args.output or f"movingout-install-{target_family}.sh"
-    write_script(content, out_path)
-    print(f"Done. Script generated: {out_path}")
-    print(f"Copy it to the new machine and run: bash {out_path}")
 
 
 def build_parser():

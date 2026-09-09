@@ -45,8 +45,6 @@ def _looks_like_movout_name(name):
 def _read_head(path, max_lines=15):
     lines = []
     try:
-        if os.path.getsize(path) > 20 * 1024 * 1024:
-            return lines
         with open(path, "r", errors="ignore") as f:
             for _ in range(max_lines):
                 line = f.readline()
