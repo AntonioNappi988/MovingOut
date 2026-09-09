@@ -65,3 +65,57 @@ def play_packing_animation(stdscr, items, min_seconds=1.2, max_seconds=3.5):
         time.sleep(delay)
 
     stdscr.nodelay(False)
+
+
+SPINNER_FRAMES = ["|", "/", "-", "\\"]
+INSTALL_PHASES = [
+    "Reading script",
+    "Installing packages",
+    "Enabling services",
+    "Restoring custom scripts",
+    "Finishing up",
+]
+
+
+def play_install_animation(stdscr, label, min_seconds=1.0, max_seconds=2.2):
+    """Spinner + step checklist played right before an existing porting
+    script is executed. Deliberately different from play_packing_animation
+    (that one fills a box while generating a new script) so the two actions
+    stay visually distinct.
+    """
+    h, w = stdscr.getmaxyx()
+    top = max(1, h // 2 - (len(INSTALL_PHASES) + 4) // 2)
+    left = max(1, w // 2 - 20)
+
+    total_frames = 40
+    delay = max(min_seconds, min(max_seconds, total_frames * 0.05)) / total_frames
+
+    stdscr.nodelay(True)
+    for frame in range(total_frames + 1):
+        stdscr.erase()
+        title = f"MovingOut is installing: {label}"
+        try:
+            stdscr.addstr(top - 2, max(0, left - 2), title[: w - 1], curses.A_BOLD)
+        except curses.error:
+            pass
+
+        done_count = int(len(INSTALL_PHASES) * frame / total_frames)
+        spin = SPINNER_FRAMES[frame % len(SPINNER_FRAMES)]
+        for i, phase in enumerate(INSTALL_PHASES):
+            row = top + i
+            if i < done_count:
+                mark = "[x]"
+            elif i == done_count:
+                mark = f"[{spin}]"
+            else:
+                mark = "[ ]"
+            line = f"  {mark} {phase}"
+            try:
+                stdscr.addstr(row, left, line[: w - 1])
+            except curses.error:
+                pass
+
+        stdscr.refresh()
+        time.sleep(delay)
+
+    stdscr.nodelay(False)

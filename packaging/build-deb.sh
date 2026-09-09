@@ -5,7 +5,7 @@
 #   sudo dpkg -i movout_<version>_all.deb
 set -euo pipefail
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PKG_DIR="$(mktemp -d)"
 trap 'rm -rf "$PKG_DIR"' EXIT

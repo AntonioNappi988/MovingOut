@@ -1,10 +1,14 @@
 import argparse
 import curses
 import os
+import subprocess
 import sys
 
-from . import __version__, distro, packages, services, customscripts, rules
-from .tui import Item, pick_target_distro, run_selector, run_packing_animation
+from . import __version__, distro, packages, services, customscripts, rules, portscan
+from .tui import (
+    Item, pick_target_distro, run_selector, run_packing_animation,
+    confirm_install, run_install_animation, run_scanning_animation,
+)
 from .generator import build_script, write_script
 
 
@@ -54,23 +58,38 @@ def cmd_scan(args):
     print(f"Custom scripts found: {len(script_paths)}")
 
 
-def _curses_main(stdscr, args, info, pkg_names, svc_names, script_paths):
+def _curses_main(stdscr, args, info):
     curses.curs_set(0)
     # Raw mode: without it, Ctrl+C raises SIGINT/KeyboardInterrupt instead of
     # reaching getch(), and Ctrl+S is swallowed by terminal flow control
     # (XOFF), freezing the screen instead of triggering save.
     curses.raw()
-    if args.same_distro:
-        target_family = info["family"]
-    else:
-        target_family = pick_target_distro(stdscr, info["family"])
-        if target_family is None:
-            return None, None
+    while True:
+        if args.same_distro:
+            mode, value = "create", info["family"]
+        else:
+            found_scripts = portscan.find_generated_scripts(info["family"])
+            mode, value = pick_target_distro(stdscr, info["family"], found_scripts)
+            if mode is None:
+                return None, None, None
 
-    categories = _build_categories(info, target_family, pkg_names, svc_names, script_paths)
+        if mode == "install":
+            if confirm_install(stdscr, value):
+                run_install_animation(stdscr, value)
+                return None, None, value
+            continue  # back to the distro/install picker
+
+        target_family = value
+        break
+
+    def _do_scan():
+        pkg_names, svc_names, script_paths = _scan(info)
+        return _build_categories(info, target_family, pkg_names, svc_names, script_paths)
+
+    categories = run_scanning_animation(stdscr, _do_scan)
     result = run_selector(stdscr, categories, target_family)
     if result != "save":
-        return None, None
+        return None, None, None
 
     selected_pkgs = [it.name for it in categories["Packages"] if it.selected]
     selected_svcs = [it.name for it in categories["Services (systemd)"] if it.selected]
@@ -80,25 +99,46 @@ def _curses_main(stdscr, args, info, pkg_names, svc_names, script_paths):
     run_packing_animation(stdscr, all_selected_names)
 
     content = build_script(info, target_family, selected_pkgs, selected_svcs, selected_scripts)
-    return content, target_family
+    return content, target_family, None
+
+
+def _run_install_script(path):
+    print(f"MovingOut: running install script: {path}")
+    try:
+        subprocess.run(["bash", path], check=False)
+    except FileNotFoundError:
+        print("Error: 'bash' not found on this system.")
+
+
+def _ask_exit_or_restart():
+    while True:
+        choice = input("Press 1 to exit, 0 to restart MovingOut: ").strip()
+        if choice in ("1", "0"):
+            return choice
 
 
 def cmd_run(args):
     info = distro.detect_current()
-    print("MovingOut: scanning the system...")
-    pkg_names, svc_names, script_paths = _scan(info)
 
-    content, target_family = curses.wrapper(
-        _curses_main, args, info, pkg_names, svc_names, script_paths
-    )
-    if content is None:
-        print("Cancelled, no file was generated.")
+    while True:
+        content, target_family, install_path = curses.wrapper(_curses_main, args, info)
+
+        if install_path:
+            _run_install_script(install_path)
+            return
+
+        if content is None:
+            print("Cancelled, no file was generated.")
+            return
+
+        out_path = args.output or f"movingout-install-{target_family}.sh"
+        write_script(content, out_path)
+        print(f"Done. Script generated: {out_path}")
+        print(f"Copy it to the new machine and run: bash {out_path}")
+
+        if _ask_exit_or_restart() == "0":
+            continue
         return
-
-    out_path = args.output or f"movingout-install-{target_family}.sh"
-    write_script(content, out_path)
-    print(f"Done. Script generated: {out_path}")
-    print(f"Copy it to the new machine and run: bash {out_path}")
 
 
 def build_parser():
