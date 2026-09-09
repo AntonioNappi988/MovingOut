@@ -7,7 +7,7 @@ import sys
 from . import __version__, distro, packages, services, customscripts, rules, portscan
 from .tui import (
     Item, pick_target_distro, run_selector, run_packing_animation,
-    confirm_install, run_install_animation,
+    confirm_install, run_install_animation, run_scanning_animation,
 )
 from .generator import build_script, write_script
 
@@ -82,8 +82,11 @@ def _curses_main(stdscr, args, info):
         target_family = value
         break
 
-    pkg_names, svc_names, script_paths = _scan(info)
-    categories = _build_categories(info, target_family, pkg_names, svc_names, script_paths)
+    def _do_scan():
+        pkg_names, svc_names, script_paths = _scan(info)
+        return _build_categories(info, target_family, pkg_names, svc_names, script_paths)
+
+    categories = run_scanning_animation(stdscr, _do_scan)
     result = run_selector(stdscr, categories, target_family)
     if result != "save":
         return None, None, None

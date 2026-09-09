@@ -1,6 +1,7 @@
 """MovingOut interactive shell GUI (curses)."""
 import curses
 import os
+import threading
 
 from . import __version__, APP_NAME
 from .distro import SUPPORTED_TARGETS
@@ -16,6 +17,48 @@ def _draw_app_header(stdscr, w):
     banner = f"{APP_NAME} v{__version__}"
     col = max(0, (w - len(banner)) // 2)
     stdscr.addstr(0, col, banner[: w - 1], curses.A_BOLD)
+
+
+def run_scanning_animation(stdscr, work_fn, message="Scanning system (packages, services, scripts)..."):
+    """Runs work_fn() in a background thread while drawing an indeterminate
+    progress bar, so the command is clearly acknowledged even when the scan
+    is slow (large package lists). Returns work_fn()'s return value."""
+    result = {}
+
+    def _target():
+        result["value"] = work_fn()
+
+    t = threading.Thread(target=_target)
+    t.start()
+
+    h, w = stdscr.getmaxyx()
+    top = h // 2
+    left = max(1, (w - max(len(message), 26)) // 2)
+    bar_w = 24
+    frame = 0
+
+    stdscr.nodelay(True)
+    while t.is_alive():
+        stdscr.erase()
+        _draw_app_header(stdscr, w)
+        try:
+            stdscr.addstr(top - 1, left, message[: w - 1], curses.A_BOLD)
+        except curses.error:
+            pass
+        pos = frame % (bar_w * 2)
+        pos = pos if pos < bar_w else (bar_w * 2 - pos) - 1
+        bar = "[" + (" " * pos) + "=" + (" " * (bar_w - pos - 1)) + "]"
+        try:
+            stdscr.addstr(top + 1, left, bar)
+        except curses.error:
+            pass
+        stdscr.refresh()
+        curses.napms(80)
+        frame += 1
+
+    t.join()
+    stdscr.nodelay(False)
+    return result.get("value")
 
 
 class Item:
@@ -81,8 +124,8 @@ def pick_target_distro(stdscr, current_family, found_scripts=None):
             i = len(distro_entries) + j
             marker = "->" if i == idx else "  "
             attr = curses.A_REVERSE if i == idx else curses.A_NORMAL
-            line = (f"{marker} Found '{os.path.basename(path)}' in "
-                    f"{os.path.dirname(path) or '.'} - run it on this machine?")
+            line = (f"{marker} Run on this machine: '{os.path.basename(path)}' "
+                    f"(found in {os.path.dirname(path) or '.'}) - Enter to install")
             stdscr.addstr(row, 2, line[: w - 3], attr)
             row += 1
 
