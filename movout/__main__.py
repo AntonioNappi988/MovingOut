@@ -5,7 +5,10 @@ import subprocess
 import sys
 
 from . import __version__, distro, packages, services, customscripts, rules, portscan
-from .tui import Item, pick_target_distro, run_selector, run_packing_animation
+from .tui import (
+    Item, pick_target_distro, run_selector, run_packing_animation,
+    confirm_install, run_install_animation,
+)
 from .generator import build_script, write_script
 
 
@@ -61,18 +64,24 @@ def _curses_main(stdscr, args, info):
     # reaching getch(), and Ctrl+S is swallowed by terminal flow control
     # (XOFF), freezing the screen instead of triggering save.
     curses.raw()
-    if args.same_distro:
-        mode, value = "create", info["family"]
-    else:
-        found_scripts = portscan.find_generated_scripts()
-        mode, value = pick_target_distro(stdscr, info["family"], found_scripts)
-        if mode is None:
-            return None, None, None
+    while True:
+        if args.same_distro:
+            mode, value = "create", info["family"]
+        else:
+            found_scripts = portscan.find_generated_scripts(info["family"])
+            mode, value = pick_target_distro(stdscr, info["family"], found_scripts)
+            if mode is None:
+                return None, None, None
 
-    if mode == "install":
-        return None, None, value
+        if mode == "install":
+            if confirm_install(stdscr, value):
+                run_install_animation(stdscr, value)
+                return None, None, value
+            continue  # back to the distro/install picker
 
-    target_family = value
+        target_family = value
+        break
+
     pkg_names, svc_names, script_paths = _scan(info)
     categories = _build_categories(info, target_family, pkg_names, svc_names, script_paths)
     result = run_selector(stdscr, categories, target_family)
@@ -104,11 +113,7 @@ def cmd_run(args):
     content, target_family, install_path = curses.wrapper(_curses_main, args, info)
 
     if install_path:
-        answer = input(f"Run '{install_path}' on this machine now? [y/N] ").strip().lower()
-        if answer == "y":
-            _run_install_script(install_path)
-        else:
-            print("Cancelled, script not executed.")
+        _run_install_script(install_path)
         return
 
     if content is None:

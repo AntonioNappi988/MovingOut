@@ -3,7 +3,7 @@ import curses
 import os
 
 from .distro import SUPPORTED_TARGETS
-from .animation import play_packing_animation
+from .animation import play_packing_animation, play_install_animation
 
 CTRL_S = 19  # Ctrl+S
 CTRL_C = 3   # Ctrl+C (curses usually delivers this as KeyboardInterrupt, handled too)
@@ -53,8 +53,14 @@ def pick_target_distro(stdscr, current_family, found_scripts=None):
 
         if install_entries:
             row += 1
-            stdscr.addstr(row, 2, "-- Install mode: run an existing migration script --",
-                          curses.A_BOLD | curses.A_UNDERLINE)
+            wall = "-" * max(10, w - 4)
+            stdscr.addstr(row, 2, wall[: w - 3])
+            row += 1
+            stdscr.addstr(
+                row, 2,
+                f"Install an existing migration script for '{current_family}':",
+                curses.A_BOLD | curses.A_UNDERLINE,
+            )
             row += 1
             for j, path in enumerate(install_entries):
                 i = len(distro_entries) + j
@@ -234,3 +240,26 @@ def _toggle_category(flat, cursor):
 
 def run_packing_animation(stdscr, item_names):
     play_packing_animation(stdscr, item_names)
+
+
+def confirm_install(stdscr, path):
+    """Curses-based y/N confirmation before running a previously-generated
+    script found on this machine. Returns True/False."""
+    curses.curs_set(0)
+    h, w = stdscr.getmaxyx()
+    stdscr.erase()
+    stdscr.addstr(2, 2, "MovingOut - confirm installation", curses.A_BOLD)
+    stdscr.addstr(4, 2, f"Run '{os.path.basename(path)}' on this machine now?"[: w - 3])
+    stdscr.addstr(5, 2, path[: w - 3])
+    stdscr.addstr(h - 2, 2, "y: confirm   n / Ctrl+C: cancel and go back")
+    stdscr.refresh()
+    while True:
+        key = stdscr.getch()
+        if key in (ord("y"), ord("Y")):
+            return True
+        if key in (ord("n"), ord("N"), CTRL_C, 27):
+            return False
+
+
+def run_install_animation(stdscr, path):
+    play_install_animation(stdscr, os.path.basename(path))
