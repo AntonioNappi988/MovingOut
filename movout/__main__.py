@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 
-from . import __version__, distro, packages, services, customscripts, rules, portscan
+from . import __version__, distro, packages, services, customscripts, rules, portscan, pkgvalidate
 from .tui import (
     Item, pick_target_distro, run_selector, run_packing_animation,
     confirm_install, run_install_animation, run_scanning_animation,
@@ -95,10 +95,21 @@ def _curses_main(stdscr, args, info):
     selected_svcs = [it.name for it in categories["Services (systemd)"] if it.selected]
     selected_scripts = [it.name for it in categories["Custom scripts"] if it.selected]
 
+    if selected_pkgs and info["family"] != target_family:
+        # Same-family reinstall: the package is already known-good on this
+        # exact machine, no point spending network calls to re-confirm it.
+        validation = run_scanning_animation(
+            stdscr,
+            lambda: pkgvalidate.validate_selected(selected_pkgs, target_family),
+            message="Validating package names for the target distro...",
+        )
+    else:
+        validation = {}
+
     all_selected_names = selected_pkgs + selected_svcs + [os.path.basename(p) for p in selected_scripts]
     run_packing_animation(stdscr, all_selected_names)
 
-    content = build_script(info, target_family, selected_pkgs, selected_svcs, selected_scripts)
+    content = build_script(info, target_family, selected_pkgs, selected_svcs, selected_scripts, validation)
     return content, target_family, None
 
 
