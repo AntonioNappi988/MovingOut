@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="movingoutlogo.png" alt="MovingOut logo" width="200"/>
+  <img src="movout.jpeg" alt="MovingOut logo" width="200"/>
   <h1>MovingOut (<code>movout</code>)</h1>
   <p><em>The ultimate Linux distro-hopping and system migration tool for the terminal.</em></p>
   
